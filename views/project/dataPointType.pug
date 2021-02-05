@@ -75,14 +75,17 @@ block content
 	if (false)
 		.card
 			.card-body.pb-0
-				ol
-					each dataPoint in dataPoints
-						- delete dataPoint._id;
-						- delete dataPoint.projectId;
-						- delete dataPoint.name;
+				table.table.table-sm.table-striped
+					each dataPoint, dpIndex in dataPoints
+						tr
+							th.text-right
+								small.font-weight-bold #{(dpIndex + 1).toLocaleString()}
+							- delete dataPoint._id;
+							- delete dataPoint.projectId;
+							- delete dataPoint.name;
 
-						li
-							span.text-monospace #{JSON.stringify(dataPoint)}
+							td
+								small.text-monospace.text-wrap #{JSON.stringify(dataPoint)}
 
 block afterSharedScripts
 	script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js")
