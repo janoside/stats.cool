@@ -1,0 +1,250 @@
+extends ../layout
+
+block headBlock
+	title Stats: Project #{project.name}
+
+block content
+	nav(aria-label="breadcrumb")
+		ol.breadcrumb
+			li.breadcrumb-item
+				a(href="/") Home
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}`) #{project.name}
+
+			li.breadcrumb-item.active(aria-current="page") #{dataPointName}
+
+	h1.mb-3 #{dataPointName}
+	hr
+
+	.card.mb-4
+		.card-body
+			- var timespans = [ "24h", "3d", "6d", "30d" ];
+			.btn-group(role="group")
+				each timespanX in timespans
+					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-secondary")) #{timespanX}
+
+	if (false)
+		ol
+			each dataPoint in dataPoints
+				li #{JSON.stringify(dataPoint)}
+
+	if (data.min || data.max || data.avg || data.val)
+		.mb-5
+			canvas(id="chart1")
+
+	if (data.sum)
+		.mb-5
+			canvas(id="chartSum")
+
+	if (data.count)
+		.mb-5
+			canvas(id="chartCount")
+
+block afterSharedScripts
+	script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js")
+	script(src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js")
+	script(src="/js/chartUtils.js")
+
+block afterInlineScript
+	script.
+		var datasets1 = [];
+		var datasetsSum = [];
+		var datasetsCount = [];
+
+		var color = Chart.helpers.color;
+
+	script.
+		function makeChart(elementId, datasets, verticalAxisTitle) {
+			var ctx = document.getElementById(elementId).getContext('2d');
+			ctx.canvas.width = 1000;
+			ctx.canvas.height = 300;
+
+			var color = Chart.helpers.color;
+			var cfg = {
+				data: {
+					datasets: datasets
+				},
+				options: {
+					animation: {
+						duration: 0
+					},
+					scales: {
+						xAxes: [{
+							type: 'time',
+							distribution: 'series',
+							offset: true,
+							ticks: {
+								major: {
+									enabled: true,
+									fontStyle: 'bold'
+								},
+								source: 'data',
+								autoSkip: true,
+								autoSkipPadding: 75,
+								maxRotation: 0,
+								sampleSize: 100
+							},
+							afterBuildTicks: function(scale, ticks) {
+								var majorUnit = scale._majorUnit;
+								var firstTick = ticks[0];
+								var i, ilen, val, tick, currMajor, lastMajor;
+
+								val = moment(ticks[0].value);
+								if ((majorUnit === 'minute' && val.second() === 0)
+										|| (majorUnit === 'hour' && val.minute() === 0)
+										|| (majorUnit === 'day' && val.hour() === 9)
+										|| (majorUnit === 'month' && val.date() <= 3 && val.isoWeekday() === 1)
+										|| (majorUnit === 'year' && val.month() === 0)) {
+									firstTick.major = true;
+								} else {
+									firstTick.major = false;
+								}
+								lastMajor = val.get(majorUnit);
+
+								for (i = 1, ilen = ticks.length; i < ilen; i++) {
+									tick = ticks[i];
+									val = moment(tick.value);
+									currMajor = val.get(majorUnit);
+									tick.major = currMajor !== lastMajor;
+									lastMajor = currMajor;
+								}
+								return ticks;
+							}
+						}],
+						yAxes: [{
+							gridLines: {
+								drawBorder: false
+							},
+							scaleLabel: {
+								display: true,
+								labelString: verticalAxisTitle
+							}
+						}]
+					},
+					tooltips: {
+						intersect: false,
+						mode: 'index',
+						callbacks: {
+							label: function(tooltipItem, myData) {
+								var label = myData.datasets[tooltipItem.datasetIndex].label || '';
+								if (label) {
+									label += ': ';
+								}
+								label += parseFloat(tooltipItem.value).toFixed(2);
+								return label;
+							}
+						}
+					}
+				}
+			};
+
+			var chart = new Chart(ctx, cfg);
+		}
+
+	if (data.min)
+		script.
+			var dataMin = !{JSON.stringify(data.min)};
+			datasets1.push({
+				label: 'min',
+				backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.red,
+				data: dataMin,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.max)
+		script.
+			var dataMax = !{JSON.stringify(data.max)};
+			datasets1.push({
+				label: 'max',
+				backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.green,
+				data: dataMax,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.avg)
+		script.
+			var dataAvg = !{JSON.stringify(data.avg)};
+			datasets1.push({
+				label: 'avg',
+				backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.blue,
+				data: dataAvg,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.val)
+		script.
+			var dataVal = !{JSON.stringify(data.val)};
+			datasets1.push({
+				label: 'val',
+				backgroundColor: color(window.chartColors.yellow).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.yellow,
+				data: dataVal,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.sum)
+		script.
+			var dataSum = !{JSON.stringify(data.sum)};
+			datasetsSum.push({
+				label: 'sum',
+				backgroundColor: color(window.chartColors.purple).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.purple,
+				data: dataSum,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.count)
+		script.
+			var dataCount = !{JSON.stringify(data.count)};
+			datasetsCount.push({
+				label: 'count',
+				backgroundColor: color(window.chartColors.purple).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.purple,
+				data: dataCount,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.min || data.max || data.avg || data.val)
+		script.
+			var names = [];
+			if (dataMin) { names.push("min"); }
+			if (dataMax) { names.push("max"); }
+			if (dataAvg) { names.push("avg"); }
+			if (dataVal) { names.push("val"); }
+			makeChart("chart1", datasets1, names.join(", "));
+
+	if (data.sum)
+		script.
+			makeChart("chartSum", datasetsSum, "sum");
+
+	if (data.count)
+		script.
+			makeChart("chartCount", datasetsCount, "count");

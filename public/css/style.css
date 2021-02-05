@@ -1,0 +1,7 @@
+.dotted-bottom {
+	border-bottom: dotted 1px #ccc;
+}
+
+hr {
+	margin-top: 0.25rem;
+}

@@ -1,0 +1,39 @@
+{
+	"name": "stats.cool",
+	"version": "1.0.0",
+	"description": "A cool stats app.",
+	"main": "app.js",
+	"dependencies": {
+		"cookie-parser": "~1.4.5",
+		"debug": "4.3.1",
+		"dotenv": "8.2.0",
+		"express": "~4.17.1",
+		"express-async-handler": "1.1.4",
+		"express-session": "1.17.1",
+		"http-errors": "~1.8.0",
+		"luxon": "1.25.0",
+		"marked": "1.2.9",
+		"mongodb": "3.6.4",
+		"morgan": "~1.10.0",
+		"pug": "3.0.0",
+		"simple-git": "2.32.0"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"start": "node --trace-deprecation ./bin/main.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/janoside/stats.cool.git"
+	},
+	"keywords": [
+		"stats"
+	],
+	"author": "Dan Janosik",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/janoside/stats.cool/issues"
+	},
+	"homepage": "https://github.com/janoside/stats.cool#readme"
+}

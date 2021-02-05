@@ -1,0 +1,34 @@
+extends ../layout
+
+block headBlock
+	title Stats: Project #{project.name}
+
+block content
+	nav(aria-label="breadcrumb")
+		ol.breadcrumb
+			li.breadcrumb-item
+				a(href="/") Home
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}`) #{project.name}
+
+			li.breadcrumb-item.active.text-danger(aria-current="page") Confirm Deletion
+
+	h1.mb-3 #{project.name}
+	hr
+
+	p Are you SURE you want to delete the project 
+		span.font-weight-bold #{project.name} 
+		|  and ALL of its data (N=
+		span.font-weight-bold #{dataPointCount.toLocaleString()}
+		| )?
+
+	form(method="post")
+		.mb-5
+			a.btn.btn-primary(href=`/project/${project.id}`) No, don't delete
+		
+		.card.mt-5
+			.card-body
+				h1.mb-4 THIS CANNOT BE UNDONE!
+
+				button.btn.btn-danger.mr-3(type="submit") Delete Forever

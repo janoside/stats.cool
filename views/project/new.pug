@@ -1,0 +1,16 @@
+extends ../layout
+
+block headBlock
+	title Stats: New Project
+
+block content
+	h1.mb-3 New Project
+	hr
+
+	p Projects help organize your DataPoints - every DataPoint must be associated with a project.
+
+	form(method="post", action="/project/new")
+		fieldset.form-group
+			input#name.form-control(name="name", placeholder="name")
+
+		button.btn.btn-primary.btn-block(type="submit") Create

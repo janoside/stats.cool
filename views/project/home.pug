@@ -1,0 +1,32 @@
+extends ../layout
+
+block headBlock
+	title Stats: Project #{project.name}
+
+block content
+	nav(aria-label="breadcrumb")
+		ol.breadcrumb
+			li.breadcrumb-item
+				a(href="/") Home
+
+			li.breadcrumb-item.active #{project.name}
+
+	h1.mb-3 #{project.name}
+	hr
+
+	.card.mb-4
+		.card-body
+			.dropdown
+				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
+				.dropdown-menu(aria-labelledby="dropdownMenuButton")
+					a.dropdown-item(href=`/project/${project.id}/create-test-data/20/100`) Create Test Data (sm)
+					a.dropdown-item(href=`/project/${project.id}/create-test-data/50/500`) Create Test Data (lg)
+					.dropdown-divider
+					a.dropdown-item(href=`/project/${project.id}/delete`) Delete Project...
+
+	hr
+
+	ol
+		each dataPointName in dataPointNames
+			li
+				a(href=`/project/${project.id}/${dataPointName}`) #{dataPointName}
