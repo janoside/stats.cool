@@ -9,17 +9,12 @@ const { DateTime } = require("luxon");
 
 const commonDataPointKeys = [ "projectId", "name", "tags", "date" ];
 
-router.post("/pt", asyncHandler(async (req, res, next) => {
-	const projectId = req.body.projectId;
+router.post("/project/:projectId/dataPoint", asyncHandler(async (req, res, next) => {
+	const projectId = req.params.projectId;
 	const name = req.body.name;
 
-	if (!projectId) {
-		res.json({error: "Missing required param: projectId"});
-
-		return;
-	}
-
 	if (!name) {
+		res.status(500);
 		res.json({error: "Missing required param: name"});
 
 		return;

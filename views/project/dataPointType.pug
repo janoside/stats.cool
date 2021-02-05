@@ -19,10 +19,46 @@ block content
 
 	.card.mb-4
 		.card-body
-			- var timespans = [ "24h", "3d", "6d", "30d" ];
-			.btn-group(role="group")
+			- var timespans = [ "24h", "3d", "7d", "30d" ];
+			span.btn-group.mr-3(role="group")
 				each timespanX in timespans
-					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-secondary")) #{timespanX}
+					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
+
+
+			span.dropdown
+				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
+				.dropdown-menu(aria-labelledby="dropdownMenuButton")
+					a.dropdown-item(href=`/project/${project.id}/${dataPointName}/delete`) Delete Data Points...
+
+	if (summary)
+		.card.mb-4
+			.card-body.pb-0
+				table.table
+					thead.thead-dark
+						tr
+							if (summary.hasOwnProperty("min"))
+								th Min
+							if (summary.hasOwnProperty("max"))
+								th Max
+							if (summary.hasOwnProperty("sum"))
+								th Sum
+							if (summary.hasOwnProperty("count"))
+								th Count
+
+					tbody
+						tr.text-monospace
+							if (summary.hasOwnProperty("min"))
+								td #{summary.min.toLocaleString()}
+							if (summary.hasOwnProperty("max"))
+								td #{summary.max.toLocaleString()}
+							if (summary.hasOwnProperty("sum"))
+								td #{summary.sum.toLocaleString()}
+							if (summary.hasOwnProperty("count"))
+								td #{summary.count.toLocaleString()}
+
+				if (false)
+					pre
+						code.json #{JSON.stringify(summary, null, 4)}
 
 	if (false)
 		ol
@@ -33,13 +69,13 @@ block content
 		.mb-5
 			canvas(id="chart1")
 
-	if (data.sum)
-		.mb-5
-			canvas(id="chartSum")
-
 	if (data.count)
 		.mb-5
 			canvas(id="chartCount")
+
+	if (data.sum)
+		.mb-5
+			canvas(id="chartSum")
 
 block afterSharedScripts
 	script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js")
@@ -49,6 +85,7 @@ block afterSharedScripts
 block afterInlineScript
 	script.
 		var datasets1 = [];
+		var datasets1Names = [];
 		var datasetsSum = [];
 		var datasetsCount = [];
 
@@ -145,6 +182,7 @@ block afterInlineScript
 	if (data.min)
 		script.
 			var dataMin = !{JSON.stringify(data.min)};
+			datasets1Names.push("min");
 			datasets1.push({
 				label: 'min',
 				backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
@@ -160,6 +198,7 @@ block afterInlineScript
 	if (data.max)
 		script.
 			var dataMax = !{JSON.stringify(data.max)};
+			datasets1Names.push("max");
 			datasets1.push({
 				label: 'max',
 				backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
@@ -175,6 +214,7 @@ block afterInlineScript
 	if (data.avg)
 		script.
 			var dataAvg = !{JSON.stringify(data.avg)};
+			datasets1Names.push("avg");
 			datasets1.push({
 				label: 'avg',
 				backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
@@ -190,11 +230,27 @@ block afterInlineScript
 	if (data.val)
 		script.
 			var dataVal = !{JSON.stringify(data.val)};
+			datasets1Names.push("val");
 			datasets1.push({
 				label: 'val',
 				backgroundColor: color(window.chartColors.yellow).alpha(0.5).rgbString(),
 				borderColor: window.chartColors.yellow,
 				data: dataVal,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+	if (data.count)
+		script.
+			var dataCount = !{JSON.stringify(data.count)};
+			datasetsCount.push({
+				label: 'count',
+				backgroundColor: color(window.chartColors.orange).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.orange,
+				data: dataCount,
 				type: 'line',
 				pointRadius: 0,
 				fill: false,
@@ -217,29 +273,9 @@ block afterInlineScript
 				borderWidth: 2
 			});
 
-	if (data.count)
-		script.
-			var dataCount = !{JSON.stringify(data.count)};
-			datasetsCount.push({
-				label: 'count',
-				backgroundColor: color(window.chartColors.purple).alpha(0.5).rgbString(),
-				borderColor: window.chartColors.purple,
-				data: dataCount,
-				type: 'line',
-				pointRadius: 0,
-				fill: false,
-				lineTension: 0,
-				borderWidth: 2
-			});
-
 	if (data.min || data.max || data.avg || data.val)
 		script.
-			var names = [];
-			if (dataMin) { names.push("min"); }
-			if (dataMax) { names.push("max"); }
-			if (dataAvg) { names.push("avg"); }
-			if (dataVal) { names.push("val"); }
-			makeChart("chart1", datasets1, names.join(", "));
+			makeChart("chart1", datasets1, datasets1Names.join(", "));
 
 	if (data.sum)
 		script.

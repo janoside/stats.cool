@@ -131,16 +131,14 @@ router.post("/:projectId/delete", asyncHandler(async (req, res, next) => {
 }));
 
 
-
-
-router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => {
+router.get("/:projectId/:dataPointName/:timeSpan?", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
-	const [startDate, endDate] = utils.parseTimeSpan("24h");
+	const [startDate, endDate] = utils.parseTimeSpan(req.params.timeSpan || "24h");
 
 	res.locals.project = await db.findObject("projects", { id: projectId });
 	res.locals.dataPointName = dataPointName;
-	res.locals.timespan = "24h";
+	res.locals.timespan = req.params.timeSpan || "24h";
 
 	res.locals.dataPoints = await db.findObjects(
 		"dataPoints",
@@ -152,8 +150,15 @@ router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => 
 
 	// these are "special" properties that we know what to do with "out of the box"
 	const managedPropertyNames = [ "min", "max", "avg", "val", "sum", "count" ];
+	const managedPropertySelectors = {
+		min: (a, b) => { return Math.min(a || 1000000, b); },
+		max: (a, b) => { return Math.max(a || 0, b); },
+		sum: (a, b) => { return ((a || 0) + b); },
+		count: (a, b) => { return ((a || 0) + b); }
+	};
 	
 	res.locals.data = {};
+	res.locals.summary = {};
 
 	res.locals.dataPoints.forEach(x => {
 		managedPropertyNames.forEach(propName => {
@@ -163,43 +168,10 @@ router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => 
 				}
 				
 				res.locals.data[propName].push({t: x.date, y: x[propName]});
-			}
-		});
-	});
-
-	res.render("project/dataPointType");
-}));
-
-router.get("/:projectId/:dataPointName/:timeSpan", asyncHandler(async (req, res, next) => {
-	const projectId = req.params.projectId;
-	const dataPointName = req.params.dataPointName;
-	const [startDate, endDate] = utils.parseTimeSpan(req.params.timeSpan);
-
-	res.locals.project = await db.findObject("projects", { id: projectId });
-	res.locals.dataPointName = dataPointName;
-	res.locals.timespan = req.params.timeSpan;
-
-	res.locals.dataPoints = await db.findObjects(
-		"dataPoints",
-		{
-			projectId: projectId,
-			name: dataPointName,
-			date: { $gte: startDate, $lt: endDate }
-		});
-
-	// these are "special" properties that we know what to do with "out of the box"
-	const managedPropertyNames = [ "min", "max", "avg", "val", "sum", "count" ];
-	
-	res.locals.data = {};
-
-	res.locals.dataPoints.forEach(x => {
-		managedPropertyNames.forEach(propName => {
-			if (x.hasOwnProperty(propName)) {
-				if (!res.locals.data[propName]) {
-					res.locals.data[propName] = [];
-				}
 				
-				res.locals.data[propName].push({t: x.date, y: x[propName]});
+				if (managedPropertySelectors[propName]) {
+					res.locals.summary[propName] = managedPropertySelectors[propName](res.locals.summary[propName], x[propName]);
+				}
 			}
 		});
 	});
