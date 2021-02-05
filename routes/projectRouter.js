@@ -34,7 +34,8 @@ router.post("/new", asyncHandler(async (req, res, next) => {
 	const project = {
 		id: utils.newProjectId(10),
 		ownerUsername: req.session.username,
-		name: name
+		name: name,
+		createdAt: new Date()
 	};
 
 	const savedProject = await db.insertObject("projects", project);

@@ -60,11 +60,6 @@ block content
 					pre
 						code.json #{JSON.stringify(summary, null, 4)}
 
-	if (false)
-		ol
-			each dataPoint in dataPoints
-				li #{JSON.stringify(dataPoint)}
-
 	if (data.min || data.max || data.avg || data.val)
 		.mb-5
 			canvas(id="chart1")
@@ -76,6 +71,18 @@ block content
 	if (data.sum)
 		.mb-5
 			canvas(id="chartSum")
+
+	if (false)
+		.card
+			.card-body.pb-0
+				ol
+					each dataPoint in dataPoints
+						- delete dataPoint._id;
+						- delete dataPoint.projectId;
+						- delete dataPoint.name;
+
+						li
+							span.text-monospace #{JSON.stringify(dataPoint)}
 
 block afterSharedScripts
 	script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js")

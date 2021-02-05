@@ -255,13 +255,13 @@ async function insertObjects(collectionName, documents) {
 	return new Promise((resolve, reject) => {
 		let collection = db.collection(collectionName);
 
-		documents.forEach((doc) => {
+		/*documents.forEach((doc) => {
 			if (!doc.createdAt) {
 				doc.createdAt = new Date();
 			}
 
 			doc.updatedAt = new Date();
-		});
+		});*/
 
 		collection.insertMany(documents, (err, result) => {
 			if (err) {
