@@ -26,7 +26,21 @@ block content
 
 	hr
 
-	ol
-		each dataPointName in dataPointNames
-			li
-				a(href=`/project/${project.id}/${dataPointName}`) #{dataPointName}
+	- var groups = [];
+
+	- var currentPrefix = "";
+	each dataPointName in dataPointNames
+		- var nameParts = dataPointName.split(".");
+		if (nameParts[0] != currentPrefix)
+			- groups.push({prefix:nameParts[0], list:[]});
+
+		- groups[groups.length - 1].list.push(dataPointName);
+		- currentPrefix = nameParts[0];
+
+	each item in groups
+		h5 #{item.prefix}
+		ol
+			each dataPointName in item.list
+				li
+					a(href=`/project/${project.id}/${dataPointName}`) #{dataPointName.substring(item.prefix.length + 1)}
+					small.text-muted.text-monospace  (#{dataPointCountsByName[dataPointName].toLocaleString()})

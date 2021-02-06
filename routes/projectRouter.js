@@ -48,18 +48,25 @@ router.post("/new", asyncHandler(async (req, res, next) => {
 
 router.get("/:projectId", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
+	const [startDate, endDate] = utils.parseTimeSpan(req.query.timeSpan || "30d");
 
 	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.timespan = req.query.timeSpan || "30d";
 
 	const dataPointsCollection = await db.getCollection("dataPoints");
 	const dataPointNames = await dataPointsCollection.aggregate([
-		{ $match: { projectId: projectId } },
-		{ $group: { _id: "$name" } },
+		{ $match: { projectId: projectId, date: { $gte: startDate, $lt: endDate } } },
+		{ $group: { _id: "$name", count: { $sum: 1 } } },
 		{ $sort: { _id: 1 }}
 	]).toArray();
 
 	res.locals.dataPointNames = [];
-	dataPointNames.forEach(x => res.locals.dataPointNames.push(x._id));
+	res.locals.dataPointCountsByName = {};
+
+	dataPointNames.forEach(x => {
+		res.locals.dataPointNames.push(x._id);
+		res.locals.dataPointCountsByName[x._id] = x.count;
+	});
 
 	res.render("project/home");
 }));
@@ -73,9 +80,15 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 
 	const ptsPerName = y;
 
+	const prefixes = [ utils.randomString(8, "a"), utils.randomString(6, "a"), utils.randomString(7, "a"), utils.randomString(5, "a") ];
+
 	const dataPoints = [];
 	for (let i = 0; i < x; i++) {
-		const name = utils.randomString(10);
+		const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+		let name = prefix + "." + utils.randomString(6, "a");
+		if (Math.random() > 0.5) {
+			name += ("." + utils.randomString(7, "a"));
+		}
 
 		for (let j = 0; j < ptsPerName; j++) {
 			const date = DateTime.local().plus(-1 * utils.timeSpanStringMillis("30d") * j / ptsPerName).toJSDate();

@@ -30,7 +30,10 @@ block content
 				.dropdown-menu(aria-labelledby="dropdownMenuButton")
 					a.dropdown-item(href=`/project/${project.id}/${dataPointName}/delete`) Delete Data Points...
 
-	if (summary)
+	if (dataPoints.length == 0)
+		h5.text-muted No data
+
+	if (dataPoints.length > 0 && summary)
 		.card.mb-4
 			.card-body.pb-0
 				table.table
