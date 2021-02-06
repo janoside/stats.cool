@@ -16,15 +16,25 @@ block content
 
 	.card.mb-4
 		.card-body
-			.dropdown
+			- var timespans = [ "5m", "15m", "1h", "6h", "24h", "3d", "7d", "30d" ];
+			span.btn-group.mr-3(role="group")
+				each timespanX in timespans
+					a.btn(href=`/project/${project.id}?timespan=${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
+
+
+			span.dropdown
 				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
 				.dropdown-menu(aria-labelledby="dropdownMenuButton")
 					a.dropdown-item(href=`/project/${project.id}/create-test-data/20/100`) Create Test Data (sm)
 					a.dropdown-item(href=`/project/${project.id}/create-test-data/50/500`) Create Test Data (lg)
 					.dropdown-divider
 					a.dropdown-item(href=`/project/${project.id}/delete`) Delete Project...
+			
 
 	hr
+
+	if (dataPointNames.length == 0)
+		h5.text-muted No data
 
 	- var groups = [];
 

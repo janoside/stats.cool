@@ -48,10 +48,10 @@ router.post("/new", asyncHandler(async (req, res, next) => {
 
 router.get("/:projectId", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const [startDate, endDate] = utils.parseTimeSpan(req.query.timeSpan || "30d");
+	const [startDate, endDate] = utils.parseTimeSpan(req.query.timespan || "30d");
 
 	res.locals.project = await db.findObject("projects", {id: projectId});
-	res.locals.timespan = req.query.timeSpan || "30d";
+	res.locals.timespan = req.query.timespan || "30d";
 
 	const dataPointsCollection = await db.getCollection("dataPoints");
 	const dataPointNames = await dataPointsCollection.aggregate([
