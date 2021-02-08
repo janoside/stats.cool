@@ -148,9 +148,9 @@ router.post("/:projectId/delete", asyncHandler(async (req, res, next) => {
 	res.redirect("/");
 }));
 
-router.get("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (req, res, next) => {
+router.get("/:projectId/delete-data-points/:dataPointName*", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const dataPointName = req.params.dataPointName;
+	const dataPointName = req.params.dataPointName + (req.params[0] ? req.params[0] : "");
 
 	res.locals.project = await db.findObject("projects", {id: projectId});
 	res.locals.dataPointName = dataPointName;
@@ -165,9 +165,9 @@ router.get("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (
 	res.render("project/deleteDataPointsConfirmation");
 }));
 
-router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (req, res, next) => {
+router.post("/:projectId/delete-data-points/:dataPointName*", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const dataPointName = req.params.dataPointName;
+	const dataPointName = req.params.dataPointName + (req.params[0] ? req.params[0] : "");
 
 	res.locals.project = await db.findObject("projects", {id: projectId});
 
