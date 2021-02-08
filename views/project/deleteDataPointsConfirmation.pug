@@ -1,0 +1,45 @@
+extends ../layout
+
+block headBlock
+	title Stats: Delete Data Points #{dataPointName}
+
+block content
+	nav(aria-label="breadcrumb")
+		ol.breadcrumb
+			li.breadcrumb-item
+				a(href="/") Home
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}`) #{project.name}
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}/${dataPointName}`) #{dataPointName}
+
+			li.breadcrumb-item.active.text-danger(aria-current="page") Confirm Deletion
+
+	h1.mb-3 #{dataPointName}
+	hr
+
+	p Are you SURE you want to delete ALL of the data points below?
+
+	div.mb-3
+		| Project: 
+		.text-monospace #{project.name}
+
+	div.mb-3
+		| Name: 
+		.text-monospace #{dataPointName}
+
+	div.mb-3
+		| Count: 
+		.text-monospace #{dataPointCount.toLocaleString()}
+
+	form(method="post")
+		.mb-5
+			a.btn.btn-primary(href=`/project/${project.id}/${dataPointName}`) No, don't delete
+		
+		.card.mt-5
+			.card-body
+				h1.mb-4 THIS CANNOT BE UNDONE!
+
+				button.btn.btn-danger.mr-3(type="submit") Delete Forever

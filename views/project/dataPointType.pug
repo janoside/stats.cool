@@ -22,13 +22,13 @@ block content
 			- var timespans = [ "5m", "15m", "1h", "6h", "24h", "3d", "7d", "30d" ];
 			span.btn-group.mr-3(role="group")
 				each timespanX in timespans
-					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
+					a.btn(href=`/project/${project.id}/${dataPointName}?timespan=${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
 
 
 			span.dropdown
 				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
 				.dropdown-menu(aria-labelledby="dropdownMenuButton")
-					a.dropdown-item(href=`/project/${project.id}/${dataPointName}/delete`) Delete Data Points...
+					a.dropdown-item(href=`/project/${project.id}/delete-data-points/${dataPointName}`) Delete Data Points...
 
 	if (dataPoints.length == 0)
 		h5.text-muted No data

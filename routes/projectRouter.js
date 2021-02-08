@@ -144,15 +144,53 @@ router.post("/:projectId/delete", asyncHandler(async (req, res, next) => {
 	res.redirect("/");
 }));
 
-
-router.get("/:projectId/:dataPointName/:timeSpan?", asyncHandler(async (req, res, next) => {
+router.get("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
-	const [startDate, endDate] = utils.parseTimeSpan(req.params.timeSpan || "24h");
+
+	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.dataPointName = dataPointName;
+
+	const dataPointsCollection = await db.getCollection("dataPoints");
+
+	res.locals.dataPointCount = await dataPointsCollection.countDocuments({
+		projectId: projectId,
+		name: dataPointName
+	});
+
+	res.render("project/deleteDataPointsConfirmation");
+}));
+
+router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (req, res, next) => {
+	const projectId = req.params.projectId;
+	const dataPointName = req.params.dataPointName;
+
+	res.locals.project = await db.findObject("projects", {id: projectId});
+
+	const dataPointsDeleteResult = await db.deleteObjects(
+		"dataPoints",
+		{
+			projectId: projectId,
+			name: dataPointName
+		});
+
+	debugLog("deleteResult.dataPoints: " + JSON.stringify(dataPointsDeleteResult));
+
+	req.session.userMessage = "Data points deleted.";
+	req.session.userMessageType = "success";
+
+	res.redirect(`/project/${projectId}`);
+}));
+
+
+router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => {
+	const projectId = req.params.projectId;
+	const dataPointName = req.params.dataPointName;
+	const [startDate, endDate] = utils.parseTimeSpan(req.query.timespan || "24h");
 
 	res.locals.project = await db.findObject("projects", { id: projectId });
 	res.locals.dataPointName = dataPointName;
-	res.locals.timespan = req.params.timeSpan || "24h";
+	res.locals.timespan = req.query.timespan || "24h";
 
 	res.locals.dataPoints = await db.findObjects(
 		"dataPoints",
