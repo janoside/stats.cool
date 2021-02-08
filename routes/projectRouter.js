@@ -90,6 +90,10 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 			name += ("." + utils.randomString(7, "a"));
 		}
 
+		if (Math.random() > 0.9) {
+			name += ("/" + utils.randomString(7, "a") + "/" + utils.randomString(5, "a"));
+		}
+
 		for (let j = 0; j < ptsPerName; j++) {
 			const date = DateTime.local().plus(-1 * utils.timeSpanStringMillis("30d") * j / ptsPerName).toJSDate();
 
@@ -183,9 +187,9 @@ router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async 
 }));
 
 
-router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => {
+router.get("/:projectId/:dataPointName*", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const dataPointName = req.params.dataPointName;
+	const dataPointName = req.params.dataPointName + (req.params[0] ? req.params[0] : "");
 	const [startDate, endDate] = utils.parseTimeSpan(req.query.timespan || "24h");
 
 	res.locals.project = await db.findObject("projects", { id: projectId });
