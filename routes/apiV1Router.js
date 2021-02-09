@@ -11,7 +11,7 @@ const commonDataPointKeys = [ "projectId", "name", "tags", "date" ];
 
 router.post("/project/:projectId/dataPoint", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const name = req.body.name;
+	const name = req.body.name.replace("/", ".");
 
 	if (!name) {
 		res.status(500);
