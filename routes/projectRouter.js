@@ -187,14 +187,14 @@ router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async 
 }));
 
 
-router.get("/:projectId/:dataPointName", asyncHandler(async (req, res, next) => {
+router.get("/:projectId/:dataPointName/:timespan?", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
-	const [startDate, endDate] = utils.parseTimeSpan(req.query.timespan || "24h");
+	const [startDate, endDate] = utils.parseTimeSpan(req.params.timespan || "24h");
 
 	res.locals.project = await db.findObject("projects", { id: projectId });
 	res.locals.dataPointName = dataPointName;
-	res.locals.timespan = req.query.timespan || "24h";
+	res.locals.timespan = req.params.timespan || "24h";
 
 	res.locals.dataPoints = await db.findObjects(
 		"dataPoints",

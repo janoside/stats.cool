@@ -22,7 +22,7 @@ block content
 			- var timespans = [ "5m", "15m", "1h", "6h", "24h", "3d", "7d", "30d" ];
 			span.btn-group.mr-3(role="group")
 				each timespanX in timespans
-					a.btn(href=`/project/${project.id}/${dataPointName}?timespan=${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
+					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
 
 
 			span.dropdown
@@ -67,6 +67,18 @@ block content
 		.mb-5
 			canvas(id="chart1")
 
+	if (data.min)
+		.mb-5
+			canvas(id="chartMin")
+
+	if (data.avg)
+		.mb-5
+			canvas(id="chartAvg")
+
+	if (data.max)
+		.mb-5
+			canvas(id="chartMax")
+
 	if (data.count)
 		.mb-5
 			canvas(id="chartCount")
@@ -99,6 +111,10 @@ block afterInlineScript
 	script.
 		var datasets1 = [];
 		var datasets1Names = [];
+		
+		var datasetsMin = [];
+		var datasetsAvg = [];
+		var datasetsMax = [];
 		var datasetsSum = [];
 		var datasetsCount = [];
 
@@ -208,6 +224,18 @@ block afterInlineScript
 				borderWidth: 2
 			});
 
+			datasetsMin.push({
+				label: 'min',
+				backgroundColor: color(window.chartColors.red).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.red,
+				data: dataMin,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
 	if (data.max)
 		script.
 			var dataMax = !{JSON.stringify(data.max)};
@@ -224,11 +252,35 @@ block afterInlineScript
 				borderWidth: 2
 			});
 
+			datasetsMax.push({
+				label: 'max',
+				backgroundColor: color(window.chartColors.green).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.green,
+				data: dataMax,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
 	if (data.avg)
 		script.
 			var dataAvg = !{JSON.stringify(data.avg)};
 			datasets1Names.push("avg");
 			datasets1.push({
+				label: 'avg',
+				backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+				borderColor: window.chartColors.blue,
+				data: dataAvg,
+				type: 'line',
+				pointRadius: 0,
+				fill: false,
+				lineTension: 0,
+				borderWidth: 2
+			});
+
+			datasetsAvg.push({
 				label: 'avg',
 				backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
 				borderColor: window.chartColors.blue,
@@ -289,6 +341,18 @@ block afterInlineScript
 	if (data.min || data.max || data.avg || data.val)
 		script.
 			makeChart("chart1", datasets1, datasets1Names.join(", "));
+
+	if (data.min)
+		script.
+			makeChart("chartMin", datasetsMin, "min");
+
+	if (data.avg)
+		script.
+			makeChart("chartAvg", datasetsAvg, "avg");
+
+	if (data.max)
+		script.
+			makeChart("chartMax", datasetsMax, "max");
 
 	if (data.sum)
 		script.
