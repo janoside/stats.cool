@@ -20,7 +20,7 @@ block content
 
 	.card.mb-4
 		.card-body
-			- var timespans = [ "5m", "15m", "1h", "6h", "24h", "3d", "7d", "30d" ];
+			- var timespans = [ "15m", "1h", "24h", "3d", "7d", "30d" ];
 			span.btn-group.mr-3(role="group")
 				each timespanX in timespans
 					a.btn(href=`/project/${project.id}/${dataPointName}/${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
