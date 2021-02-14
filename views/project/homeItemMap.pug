@@ -13,7 +13,11 @@ mixin branch(parent, map, level)
 			if (level > 0 && branch.allItems.length < 4)
 				each item in branch.allItems
 					li
-						a(href=`/project/${project.id}/${item.name}`) #{item.name}
+						- var shortName = item.name.substring(branch.path.length + 1);
+						if (shortName.length == 0)
+							- shortName = item.name.substring(branch.path.split(".").slice(0, -1).join(".").length + 1);
+							
+						a(href=`/project/${project.id}/${item.name}`) #{shortName.length > 0 ? shortName : item.name}
 						small.text-muted  (#{item.count})
 			else
 				h5
