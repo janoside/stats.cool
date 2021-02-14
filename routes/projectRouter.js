@@ -53,20 +53,33 @@ router.get("/:projectId", asyncHandler(async (req, res, next) => {
 	res.locals.project = await db.findObject("projects", {id: projectId});
 	res.locals.timespan = req.query.timespan || "30d";
 
+	const matchProperties = { projectId: projectId, date: { $gte: startDate, $lt: endDate } };
+	if (req.query.prefix) {
+		res.locals.prefix = req.query.prefix;
+
+		matchProperties.name = { $regex: new RegExp("^" + req.query.prefix, "i") };
+	}
+
 	const dataPointsCollection = await db.getCollection("dataPoints");
-	const dataPointNames = await dataPointsCollection.aggregate([
-		{ $match: { projectId: projectId, date: { $gte: startDate, $lt: endDate } } },
+	const dataPointAggregation = await dataPointsCollection.aggregate([
+		{ $match: matchProperties },
 		{ $group: { _id: "$name", count: { $sum: 1 } } },
 		{ $sort: { _id: 1 }}
 	]).toArray();
 
 	res.locals.dataPointNames = [];
-	res.locals.dataPointCountsByName = {};
+	//res.locals.dataPointCountsByName = {};
 
-	dataPointNames.forEach(x => {
+	const dataPointObjects = [];
+	const dataPointNameMap = {items:[], branches:{}, leafItems:[]};
+	dataPointAggregation.forEach(x => {
+		dataPointObjects.push({name: x._id, count: x.count});
+
 		res.locals.dataPointNames.push(x._id);
-		res.locals.dataPointCountsByName[x._id] = x.count;
+		//res.locals.dataPointCountsByName[x._id] = x.count;
 	});
+
+	res.locals.dataPointMap = utils.buildItemMap(dataPointObjects);
 
 	res.render("project/home");
 }));
@@ -80,7 +93,7 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 
 	const ptsPerName = y;
 
-	const prefixes = [ utils.randomString(8, "a"), utils.randomString(6, "a"), utils.randomString(7, "a"), utils.randomString(5, "a") ];
+	const prefixes = [ utils.randomString(8, "a") + ".1" + utils.randomString(5, "a"), utils.randomString(6, "a"), utils.randomString(7, "a"), utils.randomString(5, "a") ];
 
 	const dataPoints = [];
 	for (let i = 0; i < x; i++) {

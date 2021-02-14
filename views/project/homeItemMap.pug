@@ -1,0 +1,30 @@
+if (false)
+	pre
+		code #{JSON.stringify(dataPointMap)}
+
+mixin branch(parent, map, level)
+	if (false)
+		pre
+			code.json #{level} -> #{JSON.stringify(map)}
+
+
+	if (map.branches)
+		each branch, branchName in map.branches
+			if (level > 0 && branch.allItems.length < 4)
+				each item in branch.allItems
+					li
+						a(href=`/project/${project.id}/${item.name}`) #{item.name}
+						small.text-muted  (#{item.count})
+			else
+				h5
+					a(href=`/project/${project.id}?prefix=${branch.path}.`) #{branchName}
+
+				ul
+					each item in branch.leafItems
+						li #{JSON.stringify(item)}
+					
+					if (branch.branches && Object.keys(branch.branches).length != 0)
+						li
+							+branch(map, branch, level+1)
+
++branch(null, dataPointMap, 0)

@@ -136,6 +136,34 @@ function timeSpanStringMillis(str) {
 	}
 }
 
+// each item: {name:"abc[.def[.ghi]]...", count: N}
+const buildItemMap = (items) => {
+	const map = {allItems:[], branches:{}};
+
+	items.forEach(item => {
+		const nameParts = item.name.split(".");
+		
+		map.allItems.push(item);
+
+		let parent = map.branches;
+		for (let i = 0; i < nameParts.length; i++) {
+			if (!parent[nameParts[i]]) {
+				parent[nameParts[i]] = {path:nameParts.slice(0, i + 1).join("."), branches:{}, allItems:[], leafItems:[]};
+			}
+
+			parent[nameParts[i]].allItems.push(item);
+
+			if (i == nameParts.length - 1) {
+				parent[nameParts[i]].leafItems.push(item);
+			}
+
+			parent = parent[nameParts[i]].branches;
+		}
+	});
+
+	return map;
+};
+
 
 module.exports = {
 	formatDate: formatDate,
@@ -151,5 +179,6 @@ module.exports = {
 	objectHasProperty: objectHasProperty,
 	newProjectId: newProjectId,
 	parseTimeSpan: parseTimeSpan,
-	timeSpanStringMillis: timeSpanStringMillis
+	timeSpanStringMillis: timeSpanStringMillis,
+	buildItemMap: buildItemMap
 };
