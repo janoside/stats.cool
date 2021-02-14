@@ -13,22 +13,19 @@ mixin branch(parent, map, level)
 			if (level > 0 && branch.allItems.length < 4)
 				each item in branch.allItems
 					li
-						- var shortName = item.name.substring(branch.path.length + 1);
-						if (shortName.length == 0)
-							- shortName = item.name.substring(branch.path.split(".").slice(0, -1).join(".").length + 1);
-							
+						- var shortName = item.name.split(".").slice(level).join(".");
+						
 						a(href=`/project/${project.id}/${item.name}`) #{shortName.length > 0 ? shortName : item.name}
 						small.text-muted  (#{item.count})
 			else
 				h5
 					a(href=`/project/${project.id}?prefix=${branch.path}.`) #{branchName}
 
-				ul
+				ol
 					each item in branch.leafItems
 						li #{JSON.stringify(item)}
 					
 					if (branch.branches && Object.keys(branch.branches).length != 0)
-						li
-							+branch(map, branch, level+1)
+						+branch(map, branch, level+1)
 
 +branch(null, dataPointMap, 0)
