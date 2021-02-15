@@ -16,7 +16,8 @@ mixin branch(parent, map, level)
 						- var shortName = item.name.split(".").slice(level).join(".");
 						
 						a(href=`/project/${project.id}/${item.name}`) #{shortName.length > 0 ? shortName : item.name}
-						small.text-muted  (#{item.count})
+						small
+							small.text-muted.text-monospace  (#{item.count.toLocaleString()})
 			else
 				h5
 					a(href=`/project/${project.id}?prefix=${branch.path}.`) #{branchName}
