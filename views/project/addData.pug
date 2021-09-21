@@ -1,0 +1,31 @@
+extends ../layout
+
+block headBlock
+	title Project #{project.name}: Add Data
+
+block content
+	h1 Add Data
+
+	hr
+
+	form(method="post")
+		input(type="hidden", name="projectId", value=projectId)
+
+		fieldset.mb-3
+			label.form-label Name
+			input.form-control(name="name", type="text")
+
+		fieldset.mb-3
+			label.form-label Date
+			input.form-control(name="date", type="text", value=utils.formatDate(new Date()))
+
+		fieldset.mb-3
+			label.form-label Tags (optional)
+			input.form-control(name="tags", type="text")
+
+		fieldset.mb-3
+			label.form-label Data ("key=value", 1 per line)
+			textarea.form-control(name="data", rows="5")
+
+
+		button.btn.btn-primary(type="submit") Save

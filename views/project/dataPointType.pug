@@ -14,8 +14,14 @@ block content
 
 			li.breadcrumb-item.active(aria-current="page") #{dataPointName}
 
-	h1.mb-3 #{dataPointName}
-		small.h4.text-muted  (#{dataPoints.length.toLocaleString()})
+
+	.clearfix
+		.float-start
+			h1.mb-3 #{dataPointName}
+				small.h4.text-muted.fw-light  (#{dataPoints.length.toLocaleString()})
+
+		.float-end
+			a.btn.btn-primary(href=`/project/${project.id}/${dataPointName}/raw`) Raw Data
 	hr
 
 	.card.mb-4
