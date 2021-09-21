@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const app = require("../app/app.js");
-const db = require("../app/db.js");
 const debugLog = require("debug")("app:rootRouter");
 const asyncHandler = require("express-async-handler");
-const utils = require("../app/util/utils.js");
 const { DateTime } = require("luxon");
+
+const appUtils = require("@janoside/app-utils");
+const utils = appUtils.utils;
+
+const statsUtils = require("../app/statsUtils.js");
+
 
 router.get("*", asyncHandler(async (req, res, next) => {
 	var loginNeeded = false;
@@ -32,25 +36,25 @@ router.post("/new", asyncHandler(async (req, res, next) => {
 	const name = req.body.name;
 
 	const project = {
-		id: utils.newProjectId(10),
+		id: statsUtils.newProjectId(10),
 		ownerUsername: req.session.username,
 		name: name,
 		createdAt: new Date()
 	};
 
-	const savedProject = await db.insertObject("projects", project);
+	const savedProjectId = await db.insertOne("projects", project);
 
 	req.session.userMessage = "Saved!";
 	req.session.userMessageType = "success";
 
-	res.redirect(`/project/${savedProject.id}`);
+	res.redirect(`/project/${project.id}`);
 }));
 
 router.get("/:projectId", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
-	const [startDate, endDate] = utils.parseTimeSpan(req.query.timespan || "30d");
+	const [startDate, endDate] = statsUtils.parseTimeSpan(req.query.timespan || "30d");
 
-	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.project = await db.findOne("projects", {id: projectId});
 	res.locals.timespan = req.query.timespan || "30d";
 
 	const matchProperties = { projectId: projectId, date: { $gte: startDate, $lt: endDate } };
@@ -79,7 +83,7 @@ router.get("/:projectId", asyncHandler(async (req, res, next) => {
 		//res.locals.dataPointCountsByName[x._id] = x.count;
 	});
 
-	res.locals.dataPointMap = utils.buildItemMap(dataPointObjects);
+	res.locals.dataPointMap = statsUtils.buildItemMap(dataPointObjects);
 
 	res.render("project/home");
 }));
@@ -89,7 +93,7 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 	const x = parseInt(req.params.x);
 	const y = parseInt(req.params.y);
 
-	res.locals.project = await db.findObject("projects", { id: projectId });
+	res.locals.project = await db.findOne("projects", { id: projectId });
 
 	const ptsPerName = y;
 
@@ -108,7 +112,7 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 		}
 
 		for (let j = 0; j < ptsPerName; j++) {
-			const date = DateTime.local().plus(-1 * utils.timeSpanStringMillis("30d") * j / ptsPerName).toJSDate();
+			const date = DateTime.local().plus(-1 * statsUtils.timeSpanStringMillis("30d") * j / ptsPerName).toJSDate();
 
 			dataPoints.push({
 				projectId: projectId,
@@ -123,7 +127,7 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 		}
 	}
 
-	await db.insertObjects("dataPoints", dataPoints);
+	await db.insertMany("dataPoints", dataPoints);
 
 	res.locals.userMessage = "Created test data.";
 
@@ -133,7 +137,7 @@ router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, n
 router.get("/:projectId/delete", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 
-	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.project = await db.findOne("projects", {id: projectId});
 
 	const dataPointsCollection = await db.getCollection("dataPoints");
 
@@ -145,13 +149,13 @@ router.get("/:projectId/delete", asyncHandler(async (req, res, next) => {
 router.post("/:projectId/delete", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 
-	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.project = await db.findOne("projects", {id: projectId});
 
-	const dataPointsDeleteResult = await db.deleteObjects("dataPoints", { projectId: projectId });
+	const dataPointsDeleteResult = await db.deleteMany("dataPoints", { projectId: projectId });
 
 	debugLog("deleteResult.dataPoints: " + JSON.stringify(dataPointsDeleteResult));
 
-	const projectDeleteResult = await db.deleteObject("projects", { id: projectId });
+	const projectDeleteResult = await db.deleteOne("projects", { id: projectId });
 
 	debugLog("deleteResult.project: " + JSON.stringify(projectDeleteResult));
 
@@ -165,7 +169,7 @@ router.get("/:projectId/delete-data-points/:dataPointName", asyncHandler(async (
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
 
-	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.project = await db.findOne("projects", {id: projectId});
 	res.locals.dataPointName = dataPointName;
 
 	const dataPointsCollection = await db.getCollection("dataPoints");
@@ -182,9 +186,9 @@ router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async 
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
 
-	res.locals.project = await db.findObject("projects", {id: projectId});
+	res.locals.project = await db.findOne("projects", {id: projectId});
 
-	const dataPointsDeleteResult = await db.deleteObjects(
+	const dataPointsDeleteResult = await db.deleteMany(
 		"dataPoints",
 		{
 			projectId: projectId,
@@ -203,13 +207,13 @@ router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async 
 router.get("/:projectId/:dataPointName/:timespan?", asyncHandler(async (req, res, next) => {
 	const projectId = req.params.projectId;
 	const dataPointName = req.params.dataPointName;
-	const [startDate, endDate] = utils.parseTimeSpan(req.params.timespan || "24h");
+	const [startDate, endDate] = statsUtils.parseTimeSpan(req.params.timespan || "24h");
 
-	res.locals.project = await db.findObject("projects", { id: projectId });
+	res.locals.project = await db.findOne("projects", { id: projectId });
 	res.locals.dataPointName = dataPointName;
 	res.locals.timespan = req.params.timespan || "24h";
 
-	res.locals.dataPoints = await db.findObjects(
+	res.locals.dataPoints = await db.findMany(
 		"dataPoints",
 		{
 			projectId: projectId,

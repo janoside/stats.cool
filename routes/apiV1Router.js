@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const app = require("../app/app.js");
-const db = require("../app/db.js");
 const debugLog = require("debug")("app:rootRouter");
 const asyncHandler = require("express-async-handler");
 const { DateTime } = require("luxon");
@@ -44,7 +43,7 @@ router.post("/project/:projectId/dataPoint", asyncHandler(async (req, res, next)
 		dataPoint.date = new Date();
 	}
 
-	const savedDataPoint = await db.insertObject("dataPoints", dataPoint);
+	const savedDataPointId = await db.insertOne("dataPoints", dataPoint);
 
 	res.json({success:true});
 }));

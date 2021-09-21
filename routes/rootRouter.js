@@ -1,18 +1,23 @@
+const debug = require("debug");
 const express = require("express");
-const router = express.Router();
-const app = require("../app/app.js");
-const utils = require("../app/util/utils.js");
-const debugLog = require("debug")("app:rootRouter");
 const asyncHandler = require("express-async-handler");
-const passwordUtils = require("../app/util/password.js");
+
+const debugLog = debug("app:rootRouter");
+
+const ObjectId = require("mongodb").ObjectId;
+const router = express.Router();
+
+const app = require("../app/app.js");
 const appConfig = require("../app/config.js");
-const db = require("../app/db.js");
-const { ObjectID } = require("mongodb");
-const MongoObjectID = require("mongodb").ObjectID;
+
+const appUtils = require("@janoside/app-utils");
+const utils = appUtils.utils;
+const passwordUtils = appUtils.passwordUtils;
+
 
 router.get("/", asyncHandler(async (req, res, next) => {
 	if (req.session.user) {
-		res.locals.projects = await db.findObjects("projects", {ownerUsername: req.session.username});
+		res.locals.projects = await db.findMany("projects", {ownerUsername: req.session.username});
 	}
 
 	res.render("index");
@@ -26,7 +31,7 @@ router.post("/signup", asyncHandler(async (req, res, next) => {
 	const username = req.body.username;
 	const passwordHash = await passwordUtils.hash(req.body.password);
 
-	const existingUser = await db.findObject("users", {username:username});
+	const existingUser = await db.findMany("users", {username:username});
 	if (existingUser) {
 		debugLog("Username already exists");
 
@@ -43,10 +48,12 @@ router.post("/signup", asyncHandler(async (req, res, next) => {
 		passwordHash: passwordHash
 	};
 
-	const insertedUser = await db.insertObject("users", user);
+	const insertedUserId = await db.insertOne("users", user);
+
+	const newUser = await db.findOne("users", {username:username});
 
 	req.session.username = username;
-	req.session.user = insertedUser;
+	req.session.user = newUser;
 
 	req.session.userMessage = "Success!";
 	req.session.userMessageType = "success";
@@ -126,7 +133,7 @@ router.get("/link/:linkId", asyncHandler(async (req, res, next) => {
 	}
 
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
 	if (req.session.username != link.username) {
 		res.redirect("/");
@@ -141,7 +148,7 @@ router.get("/link/:linkId", asyncHandler(async (req, res, next) => {
 
 router.get("/link/:linkId/edit", asyncHandler(async (req, res, next) => {
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
 	res.locals.link = link;
 
@@ -150,7 +157,7 @@ router.get("/link/:linkId/edit", asyncHandler(async (req, res, next) => {
 
 router.post("/link/:linkId/edit", asyncHandler(async (req, res, next) => {
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
 	link.url = req.body.url;
 	link.desc = req.body.desc;
@@ -159,7 +166,7 @@ router.post("/link/:linkId/edit", asyncHandler(async (req, res, next) => {
 	debugLog("updatedLink: " + JSON.stringify(link));
 
 	const linksCollection = await db.getCollection("links");
-	const updateResult = await linksCollection.updateOne({_id:ObjectID(linkId)}, {$set: link});
+	const updateResult = await linksCollection.updateOne({_id:ObjectId(linkId)}, {$set: link});
 
 	req.session.userMessage = updateResult.result.ok == 1 ? "Link saved." : ("Status unknown: " + JSON.stringify(updateResult));
 	req.session.userMessageType = "success";
@@ -175,7 +182,7 @@ router.get("/link/:linkId/raw", asyncHandler(async (req, res, next) => {
 	}
 
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
 	if (req.session.username != link.username) {
 		res.redirect("/");
@@ -190,7 +197,7 @@ router.get("/link/:linkId/raw", asyncHandler(async (req, res, next) => {
 
 router.get("/link/:linkId/delete", asyncHandler(async (req, res, next) => {
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
 	res.locals.link = link;
 
@@ -199,9 +206,9 @@ router.get("/link/:linkId/delete", asyncHandler(async (req, res, next) => {
 
 router.post("/link/:linkId/delete", asyncHandler(async (req, res, next) => {
 	const linkId = req.params.linkId;
-	const link = await db.findObject("links", {_id:ObjectID(linkId)});
+	const link = await db.findOne("links", {_id:ObjectId(linkId)});
 
-	const result = await db.deleteObject("links", {_id:link._id});
+	const result = await db.deleteOne("links", {_id:link._id});
 
 	debugLog("deleteResult: " + JSON.stringify(result));
 	
@@ -217,8 +224,8 @@ router.get("/links", asyncHandler(async (req, res, next) => {
 		return;
 	}
 
-	const user = await db.findObject("users", {username:req.session.username});
-	const links = await db.findObjects(
+	const user = await db.findOne("users", {username:req.session.username});
+	const links = await db.findMany(
 		"links",
 		{ userId: user._id.toString()},
 		{ sort: [["date", 1]] });
@@ -241,7 +248,7 @@ router.get("/links", asyncHandler(async (req, res, next) => {
 
 router.get("/tags/:tags", asyncHandler(async (req, res, next) => {
 	const tags = req.params.tags.split(",");
-	const links = await db.findObjects(
+	const links = await db.findMany(
 		"links",
 		{ userId: req.session.user._id.toString(), tags: { $all: tags }},
 		{ sort: [["date", 1]] });
@@ -266,7 +273,7 @@ router.get("/search", asyncHandler(async (req, res, next) => {
 
 	const regex = new RegExp(query, "i");
 	
-	const links = await db.findObjects(
+	const links = await db.findMany(
 		"links",
 		{
 			$and: [
