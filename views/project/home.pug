@@ -24,13 +24,13 @@ block content
 	.card.mb-4
 		.card-body
 			- var timespans = [ "15m", "1h", "24h", "3d", "7d", "30d" ];
-			span.btn-group.mr-3(role="group")
+			span.btn-group.me-3(role="group")
 				each timespanX in timespans
 					a.btn(href=`/project/${project.id}?timespan=${timespanX}`, class=(timespan == timespanX ? "btn-primary" : "btn-light")) #{timespanX}
 
 
 			span.dropdown
-				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
+				button.btn.btn-primary.dropdown-toggle(type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false") Tools
 				.dropdown-menu(aria-labelledby="dropdownMenuButton")
 					a.dropdown-item(href=`/project/${project.id}/create-test-data/20/100`) Create Test Data (sm)
 					a.dropdown-item(href=`/project/${project.id}/create-test-data/50/500`) Create Test Data (lg)
