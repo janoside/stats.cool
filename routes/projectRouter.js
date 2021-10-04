@@ -11,6 +11,9 @@ const utils = appUtils.utils;
 const statsUtils = require("../app/statsUtils.js");
 
 
+const commonDataPointKeys = [ "projectId", "name", "tags", "date" ];
+
+
 router.get("*", asyncHandler(async (req, res, next) => {
 	var loginNeeded = false;
 
@@ -86,6 +89,68 @@ router.get("/:projectId", asyncHandler(async (req, res, next) => {
 	res.locals.dataPointMap = statsUtils.buildItemMap(dataPointObjects);
 
 	res.render("project/home");
+}));
+
+router.get("/:projectId/add-data", asyncHandler(async (req, res, next) => {
+	const projectId = req.params.projectId;
+
+	res.locals.project = await db.findOne("projects", {id: projectId});
+	res.locals.projectId = projectId;
+	
+	res.render("project/addData");
+}));
+
+router.post("/:projectId/add-data", asyncHandler(async (req, res, next) => {
+	const projectId = req.body.projectId;
+
+	res.locals.project = await db.findOne("projects", {id: projectId});
+
+	const name = req.body.name.replace("/", ".");
+
+	if (!name) {
+		res.status(500);
+		res.json({error: "Missing required param: name"});
+
+		return;
+	}
+
+	const dataPoint = {
+		projectId: projectId,
+		name: name
+	};
+
+	if (req.body.tags) {
+		dataPoint.tags = req.body.tags.split(",").map(x => x.trim().toLowerCase());
+	}
+
+	if (req.body.date) {
+		dataPoint.date = Date.parse(req.body.date);
+	}
+
+
+	console.log("data=" + req.body.data);
+	let rows = req.body.data.split("\n").map(x => { return x.split("=").map(y => y.trim()) });
+	console.log("rows=" + JSON.stringify(rows));
+
+	for (let i = 0; i < rows.length; i++) {
+		let key = rows[i][0];
+		let value = rows[i][1];
+
+		if (!commonDataPointKeys.includes(key)) {
+			dataPoint[key] = value;
+		}
+	}
+
+	if (!dataPoint.date) {
+		dataPoint.date = new Date();
+	}
+
+	const savedDataPointId = await db.insertOne("dataPoints", dataPoint);
+
+	req.session.userMessage = "Saved.";
+	req.session.userMessageType = "success";
+
+	res.redirect(`/project/${projectId}`);
 }));
 
 router.get("/:projectId/create-test-data/:x/:y", asyncHandler(async (req, res, next) => {
@@ -201,6 +266,53 @@ router.post("/:projectId/delete-data-points/:dataPointName", asyncHandler(async 
 	req.session.userMessageType = "success";
 
 	res.redirect(`/project/${projectId}`);
+}));
+
+
+router.get("/:projectId/:dataPointName/raw", asyncHandler(async (req, res, next) => {
+	const projectId = req.params.projectId;
+	const dataPointName = req.params.dataPointName;
+
+	res.locals.project = await db.findOne("projects", { id: projectId });
+	res.locals.dataPointName = dataPointName;
+	res.locals.timespan = req.params.timespan || "24h";
+
+	res.locals.dataPoints = await db.findMany(
+		"dataPoints",
+		{
+			projectId: projectId,
+			name: dataPointName
+		});
+
+	// these are "special" properties that we know what to do with "out of the box"
+	const managedPropertyNames = [ "min", "max", "avg", "val", "sum", "count" ];
+	const managedPropertySelectors = {
+		min: (a, b) => { return Math.min(a || 1000000, b); },
+		max: (a, b) => { return Math.max(a || 0, b); },
+		sum: (a, b) => { return ((a || 0) + b); },
+		count: (a, b) => { return ((a || 0) + b); }
+	};
+	
+	res.locals.data = {};
+	res.locals.summary = {};
+
+	res.locals.dataPoints.forEach(x => {
+		managedPropertyNames.forEach(propName => {
+			if (x.hasOwnProperty(propName)) {
+				if (!res.locals.data[propName]) {
+					res.locals.data[propName] = [];
+				}
+				
+				res.locals.data[propName].push({t: x.date, y: x[propName]});
+				
+				if (managedPropertySelectors[propName]) {
+					res.locals.summary[propName] = managedPropertySelectors[propName](res.locals.summary[propName], x[propName]);
+				}
+			}
+		});
+	});
+
+	res.render("project/rawDataPoints");
 }));
 
 

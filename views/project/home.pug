@@ -18,7 +18,13 @@ block content
 			else
 				li.breadcrumb-item.active #{project.name}
 
-	h1.mb-3 #{project.name}
+	.clearfix
+		.float-start
+			h1.mb-3 #{project.name}
+
+		.float-end
+			a.btn.btn-primary(href=`/project/${project.id}/add-data`) Add Data
+	
 	hr
 
 	.card.mb-4

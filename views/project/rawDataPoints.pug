@@ -1,0 +1,37 @@
+extends ../layout
+
+block headBlock
+	title Project #{project.name}: Raw Data
+
+block content
+	nav(aria-label="breadcrumb")
+		ol.breadcrumb
+			li.breadcrumb-item
+				a(href="/") Home
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}`) #{project.name}
+
+			li.breadcrumb-item
+				a(href=`/project/${project.id}/${dataPointName}`) #{dataPointName}
+
+			li.breadcrumb-item.active(aria-current="page") raw
+
+
+	.clearfix
+		.float-start
+			h1 #{dataPointName}
+				small.text-muted.fw-light.ms-2 (raw)
+
+		.float-end
+
+	hr
+
+	each dataPoint in dataPoints
+		- var x = dataPoint;
+		- delete x._id;
+		- delete x.createdAt;
+		- delete x.updatedAt;
+		- delete x.projectId;
+		- delete x.name;
+		.mb-3.border-bottom #{JSON.stringify(dataPoint)}
