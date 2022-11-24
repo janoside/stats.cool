@@ -32,7 +32,7 @@ router.post("/signup", asyncHandler(async (req, res, next) => {
 	const passwordHash = await passwordUtils.hash(req.body.password);
 
 	const existingUser = await db.findMany("users", {username:username});
-	if (existingUser) {
+	if (existingUser && existingUser.length > 0) {
 		debugLog("Username already exists");
 
 		res.locals.userMessage = "Sorry, that username is already taken.";
